@@ -1,14 +1,12 @@
 import { Router } from "express";
 import {
-  getAllQuizzes,
-  getDetailedQuizInfo,
-  createQuiz,
+  getDefaultQuizzes,
+  getQuizzById,
 } from "../controllers/quizzes.controller.js";
 
 const router = Router();
 
-router.get("/", getAllQuizzes);
-router.get("/:id", getDetailedQuizInfo);
-router.post("/", createQuiz);
+router.get("/", getDefaultQuizzes);
+router.get("/:id", getQuizzById);
 
 export default router;
