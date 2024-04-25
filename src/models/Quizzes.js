@@ -13,12 +13,11 @@ const Quizzes = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    userId: {
+    user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
     },
-    image: {
-      type: DataTypes.BLOB,
+    image_url: {
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
   },
@@ -28,4 +27,4 @@ const Quizzes = sequelize.define(
   }
 );
 
-export default Users;
+export default Quizzes;

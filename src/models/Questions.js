@@ -9,16 +9,12 @@ const Questions = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-    questionId: {
+    quiz_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    isCorrect: {
-      type: DataTypes.BOOLEAN,
       allowNull: false,
     },
   },
