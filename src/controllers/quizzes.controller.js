@@ -1,4 +1,3 @@
-import { Op } from "sequelize";
 import Quizzes from "../models/Quizzes.js";
 import Questions from "../models/Questions.js";
 import Options from "../models/Options.js";
@@ -11,16 +10,6 @@ export const getDefaultQuizzes = async (req, res) => {
       },
     });
 
-    // Get default and user Quizzes.
-    // const quizzes = await Quizzes.findAll({
-    //   where: {
-    //     [Op.or]: [
-    //       {user_id: null},
-    //       {user_id: 1},
-    //     ]
-    //   }
-    // });
-
     res.status(200).json(quizzes);
   } catch (error) {
     console.error(error);
@@ -28,21 +17,11 @@ export const getDefaultQuizzes = async (req, res) => {
   }
 };
 
-export const getQuizzById = async (req, res) => {
+export const getQuizById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    /* Waits for all promises in the array to resolve. When they 
-    all resolve, it returns an array containing the resolved 
-    values in the same order as the promises in the input array */
-    const [quiz, questions, options] = await Promise.all([
-      Quizzes.findByPk(id),
-      Questions.findAll({ where: { quiz_id: id } }),
-      Options.findAll({ where: { question_id: id } }),
-    ]);
-
-    // Format quiz response.
-    const response = formatQuizResponse(quiz, questions, options);
+    const response = await getFormatedQuizReponse(id);
 
     // Send the formatted response
     res.status(200).json(response);
@@ -52,27 +31,35 @@ export const getQuizzById = async (req, res) => {
   }
 };
 
-// Function to format the Quiz Response.
-const formatQuizResponse = (quiz, questions, options) => {
-  const { id: quiz_id, name, user_id, image_url } = quiz.dataValues;
 
-  // Create the response object.
-  const response = {
+// Format quiz response.
+const getFormatedQuizReponse = async (id) => {
+  const quiz = await Quizzes.findByPk(id);
+  const questions = await Questions.findAll({ where: { quiz_id: id } });
+  const { id: quiz_id, name, image_url } = quiz;
+
+  let response = {
     id: quiz_id,
     name,
-    user_id,
     image_url,
-    questions: questions.map((question) => ({
-      question_id: question.id,
-      quiz_id: question.quiz_id,
-      description: question.description,
-      options: options.map((option) => ({
-        option_id: option.id,
-        description: option.description,
-        is_correct: option.is_correct,
-      })),
-    })),
+    questions: [],
   };
+
+  for (const question of questions) {
+    // Get questions's options.
+    const options = await Options.findAll({
+      where: { question_id: question.dataValues.id },
+    });
+
+    const questionData = {
+      ...question.dataValues,
+      // .map() returns all the question's options.
+      options: [...options.map((option) => option.dataValues)],
+    };
+
+    // Add the questions and its options to the response.
+    response.questions = [...response.questions, questionData];
+  }
 
   return response;
 };
