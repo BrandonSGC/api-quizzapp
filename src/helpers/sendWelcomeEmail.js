@@ -2,10 +2,8 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const sendEmail = async (messageConfig) => {
+export const sendWelcomeEmail = async (emailTo) => {
   try {
-    const { to, subject, html, text = "" } = messageConfig;
-
     const transporter = nodemailer.createTransport({
       service: "Gmail",
       auth: {
@@ -16,10 +14,13 @@ export const sendEmail = async (messageConfig) => {
 
     const message = {
       from: "bransti20@gmail.com",
-      to,
-      subject,
-      html,
-      text, // Plain Text
+      to: emailTo,
+      subject: "QuizzApp - Welcome to QuizzApp Family!",
+      html: `
+      <h1>QuizzApp</h1>
+      <h2>Welcome to our QuizzApp Family</h2>
+      <p>We hope you can enjoy and have some fun playing the default quizzes or the ones created by you!</p>
+      <p>Regards, QuizzApp Team.</p>`,
     };
 
     const info = await transporter.sendMail(message);
