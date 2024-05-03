@@ -1,6 +1,8 @@
 import { Op } from "sequelize";
 import Users from "../models/Users.js";
-import { sendEmail } from "../helpers/sendEmail.js";
+import { sendWelcomeEmail } from "../helpers/sendWelcomeEmail.js";
+import bcrypt from "bcryptjs";
+import { createAccessToken } from "../helpers/jwt.js";
 
 export const getUserById = async (req, res) => {
   try {
@@ -27,9 +29,10 @@ export const getUserById = async (req, res) => {
 export const createUser = async (req, res) => {
   try {
     const { name, surname, email, username, password } = req.body;
-    // Validate data.
+    
+    // TODO: Validate data -> express-validator
 
-    // Validate email or username not registered in db already.
+    // Validate email or username not registered in DB already.
     const userExists = await Users.findOne({
       where: {
         [Op.or]: {
@@ -45,31 +48,61 @@ export const createUser = async (req, res) => {
       return;
     }
 
-    // Create user.
+    // Hash the password.
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Save user in DB.
     const user = await Users.create({
       name,
       surname,
       email,
       username,
-      password,
+      password: passwordHash,
+    });
+
+    // Create token.
+    const token = await createAccessToken({ id: user.id });
+    // Set token in cookie.
+    res.cookie("token", token);
+    // Send response
+    res.status(201).json({
+      message: "User created succesfully.",
+      user: {
+        id: user.id,
+        name: user.name,
+        surname: user.surname,
+        email: user.email,
+        username: user.username,
+      },
     });
 
     // Send email notification.
-    const emailConfig = {
-      from: "bransti20@gmail.com",
-      to: email,
-      subject: "QuizzApp - Welcome to QuizzApp Family!",
-      html: `
-        <h1>QuizzApp</h1>
-        <h2>Welcome to our QuizzApp Family</h2>
-        <p>We hope you can enjoy and have some fun playing the default quizzes or the ones created by you!</p>
-        <p>Regards, QuizzApp Team.</p>`,
-    };
+    await sendWelcomeEmail(email);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error has occured in the server." });
+  }
+};
 
-    const emailInfo = await sendEmail(emailConfig);
-    console.log(emailInfo.messageId);
+export const login = async (req, res) => {
+  try {
+    // Recieve user data from frontend.
+    const { username, password } = req.body;
 
-    res.status(201).json({ message: "User created succesfully.", user });
+    const userExists = await Users.findOne({
+      where: {
+        username: username,
+      },
+    });
+
+    if (!userExists) {
+      res.status(400).json({ message: "User not found." });
+      return;
+    }
+
+    // TODO: Compare hashed password with hashed password in database.
+
+    res.status(200).json({ message: "Login succesfull" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "An error has occured in the server." });
