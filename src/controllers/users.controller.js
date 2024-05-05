@@ -93,8 +93,7 @@ export const login = async (req, res) => {
     });
 
     if (!userFound) {
-      res.status(400).json({ message: "User not found." });
-      return;
+      return res.status(400).json({ message: "User not found." });
     }
 
     // Compare hashed password with hashed password in database.
@@ -133,5 +132,28 @@ export const logout = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "An error has ocurred in the server." });
+  }
+};
+
+export const profile = async (req, res) => {
+  try {
+    const user = await Users.findByPk(req.user.id);
+
+    if (!user) return res.status(400).json({ message: "no user" });
+
+    return res.status(200).json({
+      user: {
+        id: user.dataValues.id,
+        name: user.dataValues.name,
+        surname: user.dataValues.surname,
+        email: user.dataValues.email,
+        username: user.dataValues.username,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "An error has occurred on the server." });
   }
 };
