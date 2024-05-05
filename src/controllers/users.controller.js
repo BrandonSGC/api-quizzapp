@@ -123,3 +123,15 @@ export const login = async (req, res) => {
     res.status(500).json({ message: "An error has occured in the server." });
   }
 };
+
+export const logout = async (req, res) => {
+  try {
+    res.cookie("token", "", {
+      expires: new Date(0),
+    });
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error has ocurred in the server." });
+  }
+};
