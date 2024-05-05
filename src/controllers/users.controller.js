@@ -1,15 +1,13 @@
+import bcrypt from "bcryptjs";
 import { Op } from "sequelize";
 import Users from "../models/Users.js";
 import { sendWelcomeEmail } from "../helpers/sendWelcomeEmail.js";
-import bcrypt from "bcryptjs";
 import { createAccessToken } from "../helpers/jwt.js";
 
 export const getUserById = async (req, res) => {
   try {
     // Get user id.
     const { id } = req.params;
-
-    //TODO: Validate id -> express validator.
 
     // Validate we have a user.
     const user = await Users.findByPk(id);
@@ -29,8 +27,6 @@ export const getUserById = async (req, res) => {
 export const createUser = async (req, res) => {
   try {
     const { name, surname, email, username, password } = req.body;
-    
-    // TODO: Validate data -> express-validator
 
     // Validate email or username not registered in DB already.
     const userExists = await Users.findOne({
@@ -60,8 +56,12 @@ export const createUser = async (req, res) => {
       password: passwordHash,
     });
 
+    // Send email notification.
+    await sendWelcomeEmail(email);
+
     // Create token.
     const token = await createAccessToken({ id: user.id });
+
     // Set token in cookie.
     res.cookie("token", token);
     // Send response
@@ -75,9 +75,6 @@ export const createUser = async (req, res) => {
         username: user.username,
       },
     });
-
-    // Send email notification.
-    await sendWelcomeEmail(email);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "An error has occured in the server." });
@@ -89,20 +86,38 @@ export const login = async (req, res) => {
     // Recieve user data from frontend.
     const { username, password } = req.body;
 
-    const userExists = await Users.findOne({
+    const userFound = await Users.findOne({
       where: {
         username: username,
       },
     });
 
-    if (!userExists) {
+    if (!userFound) {
       res.status(400).json({ message: "User not found." });
       return;
     }
 
-    // TODO: Compare hashed password with hashed password in database.
+    // Compare hashed password with hashed password in database.
+    const isMatch = await bcrypt.compare(password, userFound.password);
 
-    res.status(200).json({ message: "Login succesfull" });
+    if (!isMatch) {
+      res.status(400).json({ message: "Invalid credentials." });
+      return;
+    }
+
+    const token = await createAccessToken({ id: userFound.id });
+
+    res.cookie("token", token);
+    res.status(200).json({
+      message: "Login succesfull",
+      user: {
+        id: userFound.id,
+        name: userFound.name,
+        surname: userFound.surname,
+        email: userFound.email,
+        username: userFound.username,
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "An error has occured in the server." });
