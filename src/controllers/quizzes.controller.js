@@ -31,7 +31,6 @@ export const getQuizById = async (req, res) => {
   }
 };
 
-
 // Format quiz response.
 const getFormatedQuizReponse = async (id) => {
   const quiz = await Quizzes.findByPk(id);
@@ -62,4 +61,35 @@ const getFormatedQuizReponse = async (id) => {
   }
 
   return response;
+};
+
+export const getQuizScore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const answers = req.body;
+
+    let result = {
+      totalScore: 0,
+      correctAnswers: 0,
+      totalQuestions: await Questions.count({where: {quiz_id: id}}),
+    };
+
+    for (const answerId of answers) {
+      const answer = await Options.findByPk(answerId);
+      if (answer.is_correct) {
+        result = {
+          ...result,
+          totalScore: ++result.totalScore,
+          correctAnswers: ++result.correctAnswers,
+        }
+      }
+    }
+
+    res.status(200).json({ result });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "An error has occurred on the server." });
+  }
 };
