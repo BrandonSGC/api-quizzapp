@@ -45,8 +45,11 @@ export const getFormatedQuizReponse = async (id) => {
 
     const questionData = {
       ...question.dataValues,
-      // .map() returns all the question's options.
-      options: [...options.map((option) => option.dataValues)],
+      // Return all the question's options (without its is_correct property).
+      options: [...options.map((option) => {
+        const { id, question_id, description } = option.dataValues;
+        return { id, question_id, description, }
+      })],
     };
 
     // Add the questions and its options to the response.
