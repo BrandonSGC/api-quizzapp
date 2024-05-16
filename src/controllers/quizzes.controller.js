@@ -2,12 +2,19 @@ import Quizzes from "../models/Quizzes.js";
 import Questions from "../models/Questions.js";
 import Options from "../models/Options.js";
 import { getFormatedQuizReponse, getScore } from "../helpers/quizzes.js";
+import { Op } from "sequelize";
 
 export const getDefaultQuizzes = async (req, res) => {
   try {
+    // Get user id
+    const { id } = req.query;
+
+    // Find all default quizzes. If user is provided, get their quizzes as well.
     const quizzes = await Quizzes.findAll({
       where: {
-        user_id: null,
+        user_id: {
+          [Op.or]: [id ? id : null, null],
+        },
       },
     });
 
