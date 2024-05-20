@@ -1,8 +1,11 @@
+import dotenv from "dotenv";
 import Quizzes from "../models/Quizzes.js";
 import Questions from "../models/Questions.js";
 import Options from "../models/Options.js";
 import { getFormatedQuizReponse, getScore } from "../helpers/quizzes.js";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
+
+dotenv.config();
 
 export const getDefaultQuizzes = async (req, res) => {
   try {
@@ -119,5 +122,51 @@ export const reviewQuiz = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "An error has ocurred on the server" });
+  }
+};
+
+// Create quiz
+export const createQuiz = async (req, res) => {
+  try {
+    const { name, user_id, questions } = req.body;
+    const image = req.file;
+
+    const parsedQuestions = JSON.parse(questions);
+    parsedQuestions.forEach(question => console.log(question));
+
+    // Create quiz.
+    const quiz = await Quizzes.create({
+      name,
+      user_id,
+      image_url: `/images/${image.filename}`,
+    });
+
+    // Create questions and its options.
+    for (let i = 0; i < parsedQuestions.length; i++) {
+      // Create question.
+      const { description } = parsedQuestions[i];
+      const question = await Questions.create({
+        description,
+        quiz_id: quiz.dataValues.id,
+      });
+
+      // Create options.
+      for (let j = 0; j < parsedQuestions[i].options.length; j++) {
+        const { description, is_correct} = parsedQuestions[i].options[j];
+        const option = await Options.create({
+          question_id: question.dataValues.id,
+          description,
+          is_correct,
+        });
+      }
+    }
+
+    const quizResponse = await getFormatedQuizReponse(quiz.dataValues.id);
+    res
+      .status(200)
+      .json({ message: "Quiz created successfully.", quiz: quizResponse });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error has occurred in the server." });
   }
 };
