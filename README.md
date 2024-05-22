@@ -21,7 +21,7 @@ CREATE TABLE "Quizzes" (
     name VARCHAR(100) NOT NULL,
     user_id INT,
     image_url VARCHAR(255) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES "Users"(id)
+    FOREIGN KEY (user_id) REFERENCES "Users" (id) ON DELETE CASCADE
 );
 ```
 
@@ -32,7 +32,7 @@ CREATE TABLE "Questions" (
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL,
     quiz_id INT NOT NULL,
-    FOREIGN KEY (quiz_id) REFERENCES "Quizzes"(id)
+    FOREIGN KEY (quiz_id) REFERENCES "Quizzes"(id) ON DELETE CASCADE
 );
 ```
 
@@ -44,7 +44,7 @@ CREATE TABLE "Options" (
     question_id INT NOT NULL,
     description TEXT NOT NULL,
     is_correct BOOLEAN NOT NULL,
-    FOREIGN KEY (question_id) REFERENCES "Questions"(id)
+    FOREIGN KEY (question_id) REFERENCES "Questions"(id) ON DELETE CASCADE
 );
 ```
 
