@@ -17,7 +17,7 @@ async function testConnection() {
 
 async function main() {
   try {
-    //testConnection();
+    testConnection();
     await sequelize.sync();
     app.listen(PORT, () => {
       console.log(`Server running on port: http://localhost:${PORT}/`);

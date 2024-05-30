@@ -1,9 +1,9 @@
+import { Op } from "sequelize";
 import dotenv from "dotenv";
 import Quizzes from "../models/Quizzes.js";
 import Questions from "../models/Questions.js";
 import Options from "../models/Options.js";
 import { getFormatedQuizReponse, getScore } from "../helpers/quizzes.js";
-import { Op, where } from "sequelize";
 
 dotenv.config();
 
@@ -125,14 +125,13 @@ export const reviewQuiz = async (req, res) => {
   }
 };
 
-// Create quiz
+
 export const createQuiz = async (req, res) => {
   try {
     const { name, user_id, questions } = req.body;
     const image = req.file;
 
     const parsedQuestions = JSON.parse(questions);
-    parsedQuestions.forEach(question => console.log(question));
 
     // Create quiz.
     const quiz = await Quizzes.create({
@@ -165,6 +164,36 @@ export const createQuiz = async (req, res) => {
     res
       .status(200)
       .json({ message: "Quiz created successfully.", quiz: quizResponse });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error has occurred in the server." });
+  }
+};
+
+
+export const deleteQuizById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const quizFound = await Quizzes.findByPk(id);
+
+    // Validate quiz exists.
+    if (!quizFound) {
+      return res.status(404).json({message: "Quiz not found."});
+    }
+    // Validate is not a default quiz.
+    if (quizFound.user_id === null) {
+      return res.status(403).json({message: "Cannot delete a default quiz."});
+    }
+
+
+    // TODO: Delete quiz image from the server.
+    const image_url = quizFound.image_url;
+
+    // Delete quiz.
+    await quizFound.destroy();
+    res.status(200).send({message: "Quiz deleted successfully.", quiz: quizFound});
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "An error has occurred in the server." });
