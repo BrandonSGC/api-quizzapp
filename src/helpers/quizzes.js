@@ -1,6 +1,7 @@
 import Quizzes from "../models/Quizzes.js";
 import Questions from "../models/Questions.js";
 import Options from "../models/Options.js";
+import { shuffleArray } from "./shuffleArray.js";
 
 // Get Quiz Score.
 export const getScore = async (quiz_id, answers) => {
@@ -38,21 +39,26 @@ export const getFormatedQuizReponse = async (id) => {
   };
 
   for (const question of questions) {
-    // Get questions's options.
+    // Get question's options.
     const options = await Options.findAll({
       where: { question_id: question.dataValues.id },
     });
 
+    // Extract and shuffle options.
+    const shuffledOptions = options.map((option) => {
+      const { id, question_id, description } = option.dataValues;
+      return { id, question_id, description };
+    });
+
+    // Shuffle the options array.
+    shuffleArray(shuffledOptions);
+
     const questionData = {
       ...question.dataValues,
-      // Return all the question's options (without its is_correct property).
-      options: [...options.map((option) => {
-        const { id, question_id, description } = option.dataValues;
-        return { id, question_id, description, }
-      })],
+      options: shuffledOptions,
     };
 
-    // Add the questions and its options to the response.
+    // Add the question and its options to the response.
     response.questions = [...response.questions, questionData];
   }
 
